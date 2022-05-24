@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, OrderedBulkOperation } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 //Middileware
@@ -19,6 +19,7 @@ async function run() {
         await client.connect();
 
         const productCollection = client.db('manufacturer-website').collection('products');
+        const orderCollection = client.db('manufacturer-website').collection('orders');
 
         //product read
         app.get('/product', async (req, res) => {
@@ -26,6 +27,13 @@ async function run() {
             const curser = productCollection.find(query);
             const products = await curser.toArray();
             res.send(products);
+        })
+
+        //product ordering
+        app.post('/ordering', async (req, res) => {
+            const ordering = req.body;
+            const result = await orderCollection.insertOne(ordering);
+            res.send(result);
         })
 
 
