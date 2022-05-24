@@ -1,13 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const app = express();
-const { MongoClient, ServerApiVersion, OrderedBulkOperation } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const res = require('express/lib/response');
 const port = process.env.PORT || 5000;
+
 
 //Middileware
 app.use(cors());
 app.use(express.json());
+
 
 //db connection
 
@@ -29,7 +33,22 @@ async function run() {
             res.send(products);
         })
 
-        //product ordering
+        // //product Read 
+        // app.get('/ordering', async (req, res) => {
+        //     const userEmail = req.query.userEmail;
+        //     const query = { userEmail: userEmail };
+        //     const orders = await orderCollection.find(query).toArray();
+        //     res.send(orders);
+        // })
+
+        app.get('/ordering', async (req, res) => {
+            const userEmail = req.query.userEmail;
+            const query = { userEmail: userEmail };
+            const orders = await orderCollection.find(query).toArray();
+            res.send(orders);
+        })
+
+        //product Insert
         app.post('/ordering', async (req, res) => {
             const ordering = req.body;
             const result = await orderCollection.insertOne(ordering);
