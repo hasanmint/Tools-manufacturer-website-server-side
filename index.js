@@ -24,6 +24,25 @@ async function run() {
 
         const productCollection = client.db('manufacturer-website').collection('products');
         const orderCollection = client.db('manufacturer-website').collection('orders');
+        const userCollection = client.db('doctors-portal').collection('users');
+
+
+        
+
+        //update and insert
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ result, token });
+
+        })
 
         //product read
         app.get('/product', async (req, res) => {
@@ -33,16 +52,13 @@ async function run() {
             res.send(products);
         })
 
+
         // //product Read 
-        // app.get('/ordering', async (req, res) => {
-        //     const userEmail = req.query.userEmail;
-        //     const query = { userEmail: userEmail };
-        //     const orders = await orderCollection.find(query).toArray();
-        //     res.send(orders);
-        // })
 
         app.get('/ordering', async (req, res) => {
             const userEmail = req.query.userEmail;
+            const authorization = req.headers.authorization;
+            // console.log('Auth Test', authorization)
             const query = { userEmail: userEmail };
             const orders = await orderCollection.find(query).toArray();
             res.send(orders);
@@ -54,6 +70,8 @@ async function run() {
             const result = await orderCollection.insertOne(ordering);
             res.send(result);
         })
+
+
 
 
     } finally {
