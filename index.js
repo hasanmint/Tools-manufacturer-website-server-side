@@ -3,9 +3,39 @@ const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const app = express();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const res = require('express/lib/response');
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+app.use(express.static("public"));
+app.use(express.json());
+
+const calculateOrderAmount = (items) => {
+    // Replace this constant with a calculation of the order's amount
+    // Calculate the order total on the server to prevent
+    // people from directly manipulating the amount on the client
+    return 1400;
+};
+
+app.post("/create-payment-intent", async (req, res) => {
+    const { items } = req.body;
+
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+        amount: calculateOrderAmount(items),
+        currency: "eur",
+        automatic_payment_methods: {
+            enabled: true,
+        },
+    });
+
+    res.send({
+        clientSecret: paymentIntent.client_secret,
+    });
+});
+
+app.listen(4242, () => console.log("Node server listening on port 4242!"));
 
 
 //Middileware
@@ -104,6 +134,23 @@ async function run() {
         })
 
 
+        app.post("/create-payment-intent", varifyJWT, async (req, res) => {
+            const product = req.body;
+            const price = product.price;
+            const ammount = price * 100;
+
+            // Create a PaymentIntent with the order amount and currency
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: ammount,
+                currency: "usd",
+                payment_method_types: ['card']
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
 
 
         //product read
@@ -127,6 +174,15 @@ async function run() {
                 return res.status(403).send({ message: 'forbidden access' })
             }
 
+        })
+
+
+        //Payment
+        app.get('/ordering/:id', varifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const ordering = await orderCollection.findOne(query);
+            res.send(ordering);
         })
 
         //Order Insert
@@ -180,7 +236,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/profile',varifyJWT, async (req, res) => {
+        app.get('/profile', varifyJWT, async (req, res) => {
             const profiles = await profileCollection.find().toArray();
             res.send(profiles);
         })
