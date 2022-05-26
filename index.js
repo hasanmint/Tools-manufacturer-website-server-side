@@ -44,6 +44,7 @@ async function run() {
         const productCollection = client.db('manufacturer-website').collection('products');
         const orderCollection = client.db('manufacturer-website').collection('orders');
         const userCollection = client.db('manufacturer-website').collection('users');
+        const reviewCollection = client.db('manufacturer-website').collection('reviews');
 
 
 
@@ -135,7 +136,7 @@ async function run() {
         })
 
 
-        //Add Product
+        //Get Product
         app.get('/product', varifyJWT, varifyAdmin, async (req, res) => {
             const products = await productCollection.find().toArray();
             res.send(products);
@@ -156,6 +157,19 @@ async function run() {
             res.send(result);
         })
 
+
+        // Review
+        //insert 
+        app.post('/review', async (req, res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        })
+
+        app.get('/review', async (req, res) => {
+            const reviews = await reviewCollection.find().toArray();
+            res.send(reviews);
+        })
 
 
 
