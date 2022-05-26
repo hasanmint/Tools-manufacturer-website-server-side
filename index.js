@@ -47,6 +47,17 @@ async function run() {
 
 
 
+        // Admin Varify
+        const varifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requestAccount = await userCollection.findOne({ email: requester })
+            if (requestAccount.role === 'admin') {
+                next();
+            } else {
+                res.status(403).send({ message: 'Forbidden Access' })
+            }
+        }
+
         // dashboard Users
         app.get('/user', varifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
@@ -63,21 +74,14 @@ async function run() {
         })
 
         //Make Admin
-        app.put('/user/admin/:email', varifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', varifyJWT, varifyAdmin, async (req, res) => {
             const email = req.params.email;
-            const requester = req.decoded.email;
-            const requestAccount = await userCollection.findOne({ email: requester })
-            if (requestAccount.role === 'admin') {
-                const filter = { email: email };
-                const updateDoc = {
-                    $set: { role: 'admin' },
-                };
-                const result = await userCollection.updateOne(filter, updateDoc);
-                res.send(result);
-
-            } else {
-                res.status(403).send({ message: 'Forbidden Access' })
-            }
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
 
         })
 
@@ -132,11 +136,26 @@ async function run() {
 
 
         //Add Product
-        app.post('/product', varifyJWT, async (req, res) => {
+        app.get('/product', varifyJWT, varifyAdmin, async (req, res) => {
+            const products = await productCollection.find().toArray();
+            res.send(products);
+        })
+
+        //Add Product
+        app.post('/product', varifyJWT, varifyAdmin, async (req, res) => {
             const product = req.body;
             const result = await productCollection.insertOne(product);
             res.send(result);
         })
+
+        //Delete Product
+        app.delete('/product/:email', varifyJWT, varifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const result = await productCollection.deleteOne(filter);
+            res.send(result);
+        })
+
 
 
 
