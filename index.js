@@ -46,11 +46,20 @@ async function run() {
         const userCollection = client.db('manufacturer-website').collection('users');
 
 
+
         // dashboard Users
         app.get('/user', varifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
 
+        })
+
+        //Check Role
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
         })
 
         //Make Admin
@@ -114,13 +123,20 @@ async function run() {
 
         })
 
-        //product Insert
+        //Order Insert
         app.post('/ordering', async (req, res) => {
             const ordering = req.body;
             const result = await orderCollection.insertOne(ordering);
             res.send(result);
         })
 
+
+        //Add Product
+        app.post('/product', varifyJWT, async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        })
 
 
 
