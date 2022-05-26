@@ -45,6 +45,7 @@ async function run() {
         const orderCollection = client.db('manufacturer-website').collection('orders');
         const userCollection = client.db('manufacturer-website').collection('users');
         const reviewCollection = client.db('manufacturer-website').collection('reviews');
+        const profileCollection = client.db('manufacturer-website').collection('profiles');
 
 
 
@@ -171,6 +172,18 @@ async function run() {
             res.send(reviews);
         })
 
+
+        // Profile
+        app.post('/profile', async (req, res) => {
+            const profile = req.body;
+            const result = await profileCollection.insertOne(profile);
+            res.send(result);
+        })
+
+        app.get('/profile',varifyJWT, async (req, res) => {
+            const profiles = await profileCollection.find().toArray();
+            res.send(profiles);
+        })
 
 
 
